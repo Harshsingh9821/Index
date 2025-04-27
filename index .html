@@ -1,0 +1,252 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Project by harsh singh</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background-color: #F4F4F9;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+    .rc-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        justify-content: center;
+        margin-top: 20px;
+    }
+    .rc-box {
+        background: #E8F5E9;
+        border: 1px solid #C8E6C9;
+        border-radius: 10px;
+        padding: 20px;
+        width: 300px;
+        text-align: center;
+        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    }
+    .rc-box input[type="text"] {
+        width: 80%;
+        padding: 8px;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        margin-bottom: 10px;
+    }
+    .rc-box button {
+        padding: 8px 12px;
+        border: none;
+        border-radius: 5px;
+        margin-top: 10px;
+        cursor: pointer;
+    }
+    .connect-btn {
+        background-color: #4CAF50;
+        color: white;
+    }
+    .disconnect-btn {
+        background-color: #F44336;
+        color: white;
+    }
+    .dropdown {
+        width: 80%;
+        padding: 8px;
+        margin: 10px 0;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+    }
+    .fly-btn {
+        background-color: #2196F3;
+        color: white;
+        font-weight: bold;
+    }
+</style>
+<script>
+    const websocketUrl = "wss://cs.mobstudio.ru:6672/";
+    const webSockets = {};
+    const haaapsiStore = {};
+    let planetid = "";
+
+    const parseHaaapsi = (input) => {
+        const md5Hash = CryptoJS.MD5(input).toString(CryptoJS.enc.Hex);
+        return md5Hash.split('').reverse().join('0').substr(5, 10);
+    };
+
+    function toggleConnection(button) {
+        const box = button.closest('.rc-box');
+        const boxIndex = parseInt(box.querySelector('h3').innerText.split(' ')[2]);
+        const inputBox = box.querySelector('input[type="text"]');
+        const devTypeSelect = box.querySelector('select[name="devtype"]');
+        const planetInput = box.querySelector('select[id^="cannon"]');
+
+        if (!inputBox.value.trim()) {
+            return;
+        }
+
+        const enteredCode = inputBox.value.trim();
+        const selectedDevType = devTypeSelect ? devTypeSelect.value : '352';
+        const wsKey = `box-${boxIndex}-${enteredCode}`;
+
+        if (button.innerText === "Connect") {
+            if (!webSockets[wsKey]) {
+                const ws = new WebSocket(websocketUrl);
+                webSockets[wsKey] = ws;
+
+                ws.onopen = () => {
+                    button.innerText = "Disconnect";
+                    button.className = "disconnect-btn";
+                    ws.send(`:en IDENT ${selectedDevType} -2 4030 1 2 :GALA\r\n`);
+                };
+
+                ws.onclose = () => {
+                    button.innerText = "Connect";
+                    button.className = "connect-btn";
+                    delete webSockets[wsKey];
+                    delete haaapsiStore[wsKey];
+                };
+
+                ws.onerror = () => {
+                    delete webSockets[wsKey];
+                    button.innerText = "Connect";
+                    button.className = "connect-btn";
+                };
+
+                ws.onmessage = (event) => {
+                    const message = event.data.trim();
+                    const snippets = message.split(' ');
+
+                    if (snippets[0] === 'HAAAPSI' && snippets.length > 1) {
+                        const haaapsiValue = snippets[1];
+                        const convertedHaaapsi = parseHaaapsi(haaapsiValue);
+                        haaapsiStore[wsKey] = convertedHaaapsi;
+                        const recoverText = inputBox.value.trim();
+                        if (recoverText) {
+                            ws.send('RECOVER ' + recoverText + '\r\n');
+                        }
+                    }
+
+                    if (snippets[0] === 'REGISTER' && snippets.length >= 4) {
+                        const id = snippets[1];
+                        const password = snippets[2];
+                        const username = snippets[3].split('\r\n')[0];
+                        const storedHaaapsi = haaapsiStore[wsKey] || '';
+                        ws.send(`USER ${id} ${password} ${username} ${storedHaaapsi}\r\n`);
+                    }
+
+                    if (snippets[0] === '999') {
+                    const _0x541e78 = [
+                        'PHONE 1366 768 0 2 :chrome 114.0.5735.106',
+                        'PHONE 2208 1242 0 2 :firefox 94.0',
+                        'PHONE 1536 864 0 2 :opr 80.0.4170.63',
+                        'PHONE 1536 864 0 2 :chrome 109.0.5414.75',
+                        'PHONE 1536 864 0 2 :chrome 108.0.5359.95',
+                        'PHONE 1536 864 0 2 :opr 90.0.4480.84',
+                        'PHONE 1536 864 0 2 :opr 85.0.4341.60',
+                        'PHONE 1536 864 0 2 :opr 100.0.0.0',
+                        'PHONE 1536 864 0 2 :chrome 112.0.5615.138',
+                        'PHONE 1536 864 0 2 :chrome 111.0.5563.111',
+                        'PHONE 1536 864 0 2 :chrome 113.0.5672.127',
+                        'PHONE 2208 1242 0 2 :firefox 98.0',
+                        'PHONE 2208 1242 0 2 :firefox 114.0',
+                    ];
+                    const _0x46e608 = _0x541e78[Math.floor(Math.random() * _0x541e78.length)];
+                    ws.send('FWLISTVER 281\r\n');
+                    ws.send('ADDONS 251055 2\r\n');
+                    ws.send('MYADDONS 251055 2\r\n');
+                    ws.send(_0x46e608 + '\r\n');
+                    ws.send('JOIN\r\n');
+                    }
+
+                    if (snippets[0] === '366') {
+                        const value = Math.floor(Math.random() * (375 - 355 + 1)) + 355;
+                        setTimeout(() => {
+                            ws.send(`REMOVE ${value}\r\n`);
+                        }, 3000);
+                    }
+
+                    if (snippets[0] === "VIEW_SCRIPT" && snippets.length >= 3) {
+                        planetid = snippets[2]; // Store the planet ID
+                    }
+
+                    if (message.startsWith("ADD_VIEW") && message.includes("cn/light_g")) {
+                        const delay = Math.floor(Math.random() * (1500 - 500 + 1)) + 500;
+                        setTimeout(() => {
+                            if (planetid) {
+                                ws.send(`ACTION 2401 ${planetid}\r\n`);
+                            }
+                        }, delay);
+                    }
+                       
+                    if (message.startsWith("852") && message.includes("Load Fire Cannon Ball")) {
+                        const delay = Math.floor(Math.random() * (1500 - 500 + 1)) + 500;
+                        setTimeout(() => {
+                            if (planetid) {
+                                ws.send(`ACTION 4493 ${planetid}\r\n`);
+                            }
+                        }, delay);
+                    }
+
+                    if (snippets[0] === "PING") {
+                        ws.send("PONG\r\n");
+                    }
+                };
+            }
+        } else {
+            if (webSockets[wsKey]) {
+                webSockets[wsKey].send("QUIT :ds\r\n");
+                webSockets[wsKey].close();
+            }
+        }
+    }
+
+    function fly(button) {
+        const box = button.closest('.rc-box');
+        const boxIndex = parseInt(box.querySelector('h3').innerText.split(' ')[2]);
+        const planetInput = box.querySelector('select[id^="cannon"]');
+        const selectedPlanet = planetInput ? planetInput.value : '';
+
+        const wsKey = `box-${boxIndex}-${box.querySelector('input[type="text"]').value.trim()}`;
+        const ws = webSockets[wsKey];
+
+        if (ws && ws.readyState === WebSocket.OPEN) {
+            ws.send(`JOIN ${selectedPlanet}\r\n`);
+        }
+    }
+</script>
+</head>
+<body>
+<h1>harsh enterprises 💞</h1>
+<div class="rc-container">
+    <script>
+        for (let i = 1; i <= 8; i++) {
+            document.write(`
+                <div class="rc-box">
+                    <h3>RC Box ${i}</h3>
+                    <input type="text" maxlength="10" placeholder="Enter Code">
+                    <button class="connect-btn" onclick="toggleConnection(this)">Connect</button>
+                    <br>
+                    <label for="devtype${i}">Device Type:</label>
+                    <select name="devtype" class="dropdown" id="devtype${i}">
+                        <option value="352">Web</option>
+                        <option value="312">Android</option>
+                        <option value="323">iOS</option>
+                    </select>
+                    <br>
+                    <label for="cannon${i}">Select Planet:</label>
+                    <select id="cannon${i}" class="dropdown">
+                        ${Array.from({ length: 20 }, (_, index) => `<option value="Cannon*${index + 1}">Cannon*${index + 1}</option>`).join('')}
+                    </select>
+                    <br>
+                    <button class="fly-btn" onclick="fly(this)">Fly</button>
+                </div>
+            `);
+        }
+    </script>
+</div>
+</body>
+</html>
